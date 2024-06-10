@@ -1,0 +1,595 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+  schemas  = ["Admin", "AdminAPI", "dbo"]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Acesso {
+  email     String?   @db.VarChar(150)
+  ip_acesso String?   @db.VarChar(50)
+  liberado  String?   @db.Char(1)
+  dt_acesso DateTime? @default(now(), map: "DF__Acesso__dt_acess__53D770D6") @db.Date
+
+  @@ignore
+  @@schema("dbo")
+}
+
+model Anexo {
+  id               Int                @id(map: "PK__Anexo__3213E83FC5D97BDD") @default(autoincrement())
+  caminho          String?            @db.VarChar(Max)
+  usuario_id       Int
+  data_hora        DateTime?          @default(now(), map: "DF__Anexo__data_hora__412EB0B6") @db.DateTime
+  arquivo          String?            @db.VarChar(Max)
+  Usuario          Usuario            @relation(fields: [usuario_id], references: [id], onUpdate: NoAction, map: "FK__Anexo__usuario_i__4222D4EF")
+  DemandaAnexo     DemandaAnexo[]
+  PacoteAnexo      PacoteAnexo[]
+  PacoteFormulario PacoteFormulario[]
+  ReembolsoPacote  ReembolsoPacote[]
+  RelatorioDemanda RelatorioDemanda[]
+
+  @@schema("dbo")
+}
+
+model AnexoTransferenciaNotaFiscal {
+  id             Int         @id(map: "PK__AnexoTra__3213E83FEC902AD8") @default(autoincrement())
+  nota_fiscal_id Int?
+  anexo          String?     @db.VarChar(Max)
+  arquivo        String?     @db.VarChar(500)
+  NotaFiscal     NotaFiscal? @relation(fields: [nota_fiscal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__AnexoTran__nota___756D6ECB")
+
+  @@schema("Admin")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model dbo_AreaEmpresa {
+  id         Int     @default(autoincrement())
+  nome       String  @db.VarChar(100)
+  empresa_id Int
+  Empresa    Empresa @relation(fields: [empresa_id], references: [id], onUpdate: NoAction, map: "FK__AreaEmpre__empre__2F9A1060")
+
+  @@map("AreaEmpresa")
+  @@ignore
+  @@schema("dbo")
+}
+
+model Admin_AreaEmpresa {
+  id              Int               @id(map: "PK__AreaEmpr__3213E83F8624A25E") @default(autoincrement())
+  nome            String            @db.VarChar(100)
+  empresa_id      Int
+  Empresa         Empresa           @relation(fields: [empresa_id], references: [id], onUpdate: NoAction, map: "FK__AreaEmpre__empre__336AA144")
+  AreaTipoServico AreaTipoServico[]
+  AreaUsuario     AreaUsuario[]
+  Demanda         Demanda[]
+  TipoServico     TipoServico[]
+
+  @@map("AreaEmpresa")
+  @@schema("Admin")
+}
+
+model AreaTipoServico {
+  id_area         Int
+  id_tipo_servico Int
+  AreaEmpresa     Admin_AreaEmpresa @relation(fields: [id_area], references: [id], onUpdate: NoAction, map: "fk_id_area")
+  TipoServico     TipoServico       @relation(fields: [id_tipo_servico], references: [id], onUpdate: NoAction, map: "fk_id_tipo_servico")
+
+  @@id([id_area, id_tipo_servico], map: "PK__AreaTipo__F7787437CF45863C")
+  @@schema("Admin")
+}
+
+model AreaUsuario {
+  id_area     Int
+  id_usuario  Int
+  AreaEmpresa Admin_AreaEmpresa @relation(fields: [id_area], references: [id], onUpdate: NoAction, map: "FK__AreaUsuar__id_ar__373B3228")
+  Usuario     Usuario           @relation(fields: [id_usuario], references: [id], onUpdate: NoAction, map: "FK__AreaUsuar__id_us__382F5661")
+
+  @@id([id_area, id_usuario], map: "PK__AreaUsua__4E6F63310C912244")
+  @@schema("Admin")
+}
+
+model Demanda {
+  id                                               Int                @id(map: "PK__Demanda__3213E83F338152CA") @default(autoincrement())
+  codigo                                           String             @db.VarChar(50)
+  nome                                             String             @db.VarChar(250)
+  cpf_cnpj                                         String             @db.VarChar(25)
+  cep                                              BigInt
+  uf                                               String             @db.NChar(2)
+  cidade                                           String             @db.VarChar(100)
+  bairro                                           String             @db.VarChar(100)
+  logradouro                                       String             @db.VarChar(200)
+  numero                                           String?            @db.VarChar(100)
+  telefone                                         String?            @db.VarChar(15)
+  especialidade                                    String             @db.VarChar(50)
+  tipo_servico_id                                  Int
+  observacao                                       String?            @db.VarChar(Max)
+  status_id                                        Int?
+  data_atualizacao                                 DateTime?          @db.DateTime
+  empresa_id                                       Int?
+  tipo_investigado_id                              Int?
+  data_demanda                                     DateTime?          @default(now(), map: "DF__Demanda__data_de__44FF419A") @db.DateTime
+  escolha_anexo                                    Int?               @db.TinyInt
+  usuario_criador_id                               Int?
+  usuario_distribuicao_id                          Int?
+  id_area_empresa                                  Int?
+  Empresa                                          Empresa?           @relation(fields: [empresa_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Demanda__empresa__45F365D3")
+  AreaEmpresa                                      Admin_AreaEmpresa? @relation(fields: [id_area_empresa], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Demanda__id_area__39237A9A")
+  Status                                           Status?            @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Demanda__status___46E78A0C")
+  TipoInvestigado                                  TipoInvestigado?   @relation(fields: [tipo_investigado_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Demanda__tipo_in__47DBAE45")
+  TipoServico                                      TipoServico        @relation(fields: [tipo_servico_id], references: [id], onUpdate: NoAction, map: "FK__Demanda__tipo_se__48CFD27E")
+  Usuario_Demanda_usuario_criador_idToUsuario      Usuario?           @relation("Demanda_usuario_criador_idToUsuario", fields: [usuario_criador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Demanda__usuario__01142BA1")
+  Usuario_Demanda_usuario_distribuicao_idToUsuario Usuario?           @relation("Demanda_usuario_distribuicao_idToUsuario", fields: [usuario_distribuicao_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Demanda__usuario__18EBB532")
+  DemandaAnexo                                     DemandaAnexo[]
+  Faturamento                                      Faturamento[]
+  Honorario                                        Honorario[]
+  LogDemanda                                       LogDemanda[]
+  Pacote                                           Pacote[]
+  RelatorioDemanda                                 RelatorioDemanda[]
+
+  @@schema("dbo")
+}
+
+model DemandaAnexo {
+  id         Int     @id(map: "PK__DemandaA__3213E83F7A0BE067") @default(autoincrement())
+  demanda_id Int
+  anexo_id   Int
+  Anexo      Anexo   @relation(fields: [anexo_id], references: [id], onUpdate: NoAction, map: "FK__DemandaAn__anexo__4BAC3F29")
+  Demanda    Demanda @relation(fields: [demanda_id], references: [id], onUpdate: NoAction, map: "FK__DemandaAn__deman__4CA06362")
+
+  @@schema("dbo")
+}
+
+model Empresa {
+  id                 Int                  @id(map: "PK__Empresa__3213E83FE52B12CE") @default(autoincrement())
+  cnpj               String?              @db.VarChar(18)
+  razao_social       String               @db.VarChar(100)
+  logo               String?              @db.VarChar(100)
+  dboAreaEmpresa     dbo_AreaEmpresa[]    @ignore
+  adminAreaEmpresa   Admin_AreaEmpresa[]
+  Demanda            Demanda[]
+  TipoServicoEmpresa TipoServicoEmpresa[]
+  Usuario            Usuario[]
+
+  @@schema("dbo")
+}
+
+model Faturamento {
+  id                    Int                     @id(map: "PK__Faturame__3213E83F5E3B71CA") @default(autoincrement())
+  demanda_id            Int
+  despesa_reembolso     Decimal?                @db.Decimal(18, 2)
+  valor                 Decimal?                @db.Decimal(18, 2)
+  num_nota_debito       Int?
+  caminho_nota_debito   String?                 @db.VarChar(500)
+  arquivo_nota_debito   String?                 @db.VarChar(500)
+  distribuido           Int?                    @default(0, map: "DF__Faturamen__distr__4D5F7D71") @db.TinyInt
+  nota_fiscal           Int?                    @default(0, map: "DF__Faturamen__nota___4E53A1AA") @db.TinyInt
+  Demanda               Demanda                 @relation(fields: [demanda_id], references: [id], onUpdate: NoAction, map: "FK__Faturamen__deman__5070F446")
+  NotaFiscalFaturamento NotaFiscalFaturamento[]
+
+  @@schema("dbo")
+}
+
+model Formulario {
+  id               Int                @id(map: "PK__Formular__3213E83F9B8ABA52") @default(autoincrement())
+  nome             String             @db.VarChar(100)
+  exige_assinatura Int                @db.TinyInt
+  FormularioCampo  FormularioCampo[]
+  PacoteFormulario PacoteFormulario[]
+
+  @@schema("dbo")
+}
+
+model FormularioCampo {
+  id            Int        @id(map: "PK__Formular__3213E83FE7E3D0FB") @default(autoincrement())
+  formulario_id Int
+  campo         String     @db.VarChar(500)
+  tipo          String     @db.VarChar(30)
+  permite_nulo  Int        @db.TinyInt
+  Formulario    Formulario @relation(fields: [formulario_id], references: [id], onUpdate: NoAction, map: "FK__Formulari__formu__534D60F1")
+
+  @@schema("dbo")
+}
+
+model FormularioReembolso {
+  id           Int    @id(map: "PK__Formular__3213E83F888EF692") @default(autoincrement())
+  campo        String @db.VarChar(500)
+  tipo         String @db.VarChar(30)
+  permite_nulo Int    @db.TinyInt
+
+  @@schema("dbo")
+}
+
+model Honorario {
+  id         Int      @id(map: "PK__Honorari__3213E83F3E51E41C") @default(autoincrement())
+  usuario_id Int?
+  demanda_id Int?
+  valor      Decimal? @db.Decimal(18, 2)
+  Demanda    Demanda? @relation(fields: [demanda_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Honorario__deman__5224328E")
+  Usuario    Usuario? @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Honorario__usuar__51300E55")
+
+  @@schema("Admin")
+}
+
+model LogDemanda {
+  id         Int       @id(map: "PK__LogDeman__3213E83FE5F61ACB") @default(autoincrement())
+  demanda_id Int
+  descricao  String    @db.VarChar(150)
+  data_hora  DateTime? @default(now(), map: "DF__LogDemand__data___5812160E") @db.DateTime
+  usuario_id Int?
+  Demanda    Demanda   @relation(fields: [demanda_id], references: [id], onUpdate: NoAction, map: "FK__LogDemand__deman__59063A47")
+  Usuario    Usuario?  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__LogDemand__usuar__59FA5E80")
+
+  @@schema("dbo")
+}
+
+model LogPacote {
+  id         Int       @id(map: "PK__LogPacot__3213E83F5150BF19") @default(autoincrement())
+  pacote_id  Int?
+  descricao  String?   @db.VarChar(Max)
+  data_hora  DateTime? @default(now(), map: "DF__LogPacote__data___160F4887") @db.DateTime
+  usuario_id Int?
+  Pacote     Pacote?   @relation(fields: [pacote_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__LogPacote__pacot__17036CC0")
+  Usuario    Usuario?  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__LogPacote__usuar__17F790F9")
+
+  @@schema("dbo")
+}
+
+model NotaFiscal {
+  id                           Int                            @id(map: "PK__NotaFisc__3213E83F7D3EF094") @default(autoincrement())
+  numero                       String                         @db.VarChar(50)
+  data_emissao                 DateTime?                      @db.DateTime
+  data_pgto                    DateTime?                      @db.DateTime
+  valor                        Decimal?                       @db.Decimal(18, 2)
+  imposto                      Decimal?                       @db.Decimal(18, 2)
+  anexo                        String?                        @db.VarChar(Max)
+  status_faturamento_id        Int?
+  arquivo                      String?                        @db.VarChar(100)
+  impostoPago                  Int?                           @default(0, map: "DF__NotaFisca__impos__7849DB76") @db.TinyInt
+  caminho_imposto_pago         String?                        @db.VarChar(Max)
+  arquivo_imposto_pago         String?                        @db.VarChar(Max)
+  AnexoTransferenciaNotaFiscal AnexoTransferenciaNotaFiscal[]
+  StatusFaturamento            StatusFaturamento?             @relation(fields: [status_faturamento_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__NotaFisca__statu__56E8E7AB")
+  NotaFiscalFaturamento        NotaFiscalFaturamento[]
+
+  @@schema("Admin")
+}
+
+model NotaFiscalFaturamento {
+  id             Int          @id(map: "PK__NotaFisc__3213E83FC98A423A") @default(autoincrement())
+  faturamento_id Int?
+  nota_fiscal_id Int?
+  Faturamento    Faturamento? @relation(fields: [faturamento_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__NotaFisca__fatur__59C55456")
+  NotaFiscal     NotaFiscal?  @relation(fields: [nota_fiscal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__NotaFisca__nota___5AB9788F")
+
+  @@schema("Admin")
+}
+
+model Pacote {
+  id               Int                @id(map: "PK__Pacote__3213E83F997EDFA6") @default(autoincrement())
+  demanda_id       Int
+  nome             String?            @db.VarChar(500)
+  observacao       String             @db.VarChar(Max)
+  usuario_id       Int
+  finalizado       Int?               @default(0, map: "DF__Pacote__finaliza__5CD6CB2B") @db.TinyInt
+  parecer          String?            @db.VarChar(Max)
+  data_criacao     DateTime?          @default(now(), map: "DF__Pacote__data_cri__5DCAEF64") @db.DateTime
+  data_finalizacao DateTime?          @db.DateTime
+  LogPacote        LogPacote[]
+  Demanda          Demanda            @relation(fields: [demanda_id], references: [id], onUpdate: NoAction, map: "FK__Pacote__demanda___5EBF139D")
+  Usuario          Usuario            @relation(fields: [usuario_id], references: [id], onUpdate: NoAction, map: "FK__Pacote__usuario___5FB337D6")
+  PacoteAnexo      PacoteAnexo[]
+  PacoteFormulario PacoteFormulario[]
+  ReembolsoPacote  ReembolsoPacote[]
+
+  @@schema("dbo")
+}
+
+model PacoteAnexo {
+  id              Int    @id(map: "PK__PacoteAn__3213E83FDFA28A5D") @default(autoincrement())
+  pacote_id       Int
+  anexo_id        Int?
+  analise         Int?   @db.TinyInt
+  relatorio_final Int?   @db.TinyInt
+  parcial         Int?   @default(0, map: "DF__PacoteAne__parci__0C1BC9F9") @db.TinyInt
+  Anexo           Anexo? @relation(fields: [anexo_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__PacoteAne__anexo__628FA481")
+  Pacote          Pacote @relation(fields: [pacote_id], references: [id], onUpdate: NoAction, map: "FK__PacoteAne__pacot__6383C8BA")
+
+  @@schema("dbo")
+}
+
+model PacoteFormulario {
+  id                    Int                     @id(map: "PK__PacoteFo__3213E83F9C3C76DD") @default(autoincrement())
+  pacote_id             Int
+  formulario_id         Int
+  foto                  Int?                    @db.TinyInt
+  anexo_foto_id         Int?
+  relatorio_final       Int?                    @db.TinyInt
+  Anexo                 Anexo?                  @relation(fields: [anexo_foto_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__PacoteFor__anexo__66603565")
+  Formulario            Formulario              @relation(fields: [formulario_id], references: [id], onUpdate: NoAction, map: "FK__PacoteFor__formu__6754599E")
+  Pacote                Pacote                  @relation(fields: [pacote_id], references: [id], onUpdate: NoAction, map: "FK__PacoteFor__pacot__68487DD7")
+  PacoteFormularioCampo PacoteFormularioCampo[]
+
+  @@schema("dbo")
+}
+
+model PacoteFormularioCampo {
+  id                   Int              @id(map: "PK__PacoteFo__3213E83FD1D87246") @default(autoincrement())
+  pacote_formulario_id Int
+  campo                String           @db.VarChar(500)
+  tipo                 String           @db.VarChar(30)
+  valor                String?          @db.VarChar(Max)
+  permite_nulo         Int?             @db.TinyInt
+  PacoteFormulario     PacoteFormulario @relation(fields: [pacote_formulario_id], references: [id], onUpdate: NoAction, map: "FK__PacoteFor__pacot__6B24EA82")
+
+  @@schema("dbo")
+}
+
+model Parametro {
+  id    Int     @id(map: "PK__Parametr__3213E83F460E4496") @default(autoincrement())
+  nome  String? @db.VarChar(100)
+  valor String? @db.VarChar(100)
+
+  @@schema("Admin")
+}
+
+model Perfil {
+  id      Int       @id(map: "PK__Perfil__3213E83F88CB4571") @default(autoincrement())
+  nome    String?   @db.VarChar(50)
+  Usuario Usuario[]
+
+  @@schema("dbo")
+}
+
+model Permissao {
+  id               Int                @id(map: "PK__Permissa__3213E83FB7EBC5F1") @default(autoincrement())
+  nome             String             @db.VarChar(100)
+  UsuarioPermissao UsuarioPermissao[]
+
+  @@schema("dbo")
+}
+
+model ReembolsoPacote {
+  id                 Int            @id(map: "PK__Reembols__3213E83FBCC46274") @default(autoincrement())
+  pacote_id          Int?
+  reembolso_campo_id Int?
+  data               DateTime?      @db.Date
+  valor              Decimal?       @db.Decimal(18, 2)
+  descricao          String?        @db.VarChar(200)
+  km                 Int?
+  anexo_id           Int?
+  tipo_reembolso_id  Int?
+  lpl                Int?           @default(0, map: "DF__ReembolsoPa__lpl__607251E5") @db.TinyInt
+  data_fim           DateTime?      @db.Date
+  Anexo              Anexo?         @relation(fields: [anexo_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Reembolso__anexo__498EEC8D")
+  Pacote             Pacote?        @relation(fields: [pacote_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Reembolso__pacot__4A8310C6")
+  TipoReembolso      TipoReembolso? @relation(fields: [tipo_reembolso_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Reembolso__tipo___4B7734FF")
+
+  @@schema("dbo")
+}
+
+model RelatorioDemanda {
+  id             Int      @id(map: "PK__Relatori__3213E83FAB63A3BA") @default(autoincrement())
+  demanda_id     Int
+  fraude         Int      @db.TinyInt
+  valor          Decimal? @db.Decimal(18, 2)
+  anexo_final_id Int?
+  visualizado    Int?     @default(0, map: "DF__Relatorio__visua__74AE54BC") @db.TinyInt
+  baixado        Int?     @default(0, map: "DF__Relatorio__baixa__75A278F5") @db.TinyInt
+  Anexo          Anexo?   @relation(fields: [anexo_final_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Relatorio__anexo__76969D2E")
+  Demanda        Demanda  @relation(fields: [demanda_id], references: [id], onUpdate: NoAction, map: "FK__Relatorio__deman__778AC167")
+
+  @@schema("dbo")
+}
+
+model Sequencial {
+  ano    Int
+  codigo String @db.VarChar(10)
+
+  @@id([ano, codigo], map: "pk_sequencial")
+  @@schema("dbo")
+}
+
+model Status {
+  id      Int       @id(map: "PK__Status__3213E83F7B22A027") @default(autoincrement())
+  nome    String    @db.VarChar(50)
+  Demanda Demanda[]
+
+  @@schema("dbo")
+}
+
+model StatusFaturamento {
+  id         Int          @id(map: "PK__StatusFa__3213E83FB082C329") @default(autoincrement())
+  descricao  String?      @db.VarChar(50)
+  NotaFiscal NotaFiscal[]
+
+  @@schema("Admin")
+}
+
+model TipoInvestigado {
+  id      Int       @id(map: "PK__TipoInve__3213E83FD361FDCE") @default(autoincrement())
+  nome    String?   @db.VarChar(50)
+  Demanda Demanda[]
+
+  @@schema("dbo")
+}
+
+model TipoReembolso {
+  id              Int               @id(map: "PK__TipoReem__3213E83FE90238E4") @default(autoincrement())
+  descricao       String?           @db.VarChar(50)
+  ReembolsoPacote ReembolsoPacote[]
+
+  @@schema("dbo")
+}
+
+model TipoServico {
+  id                 Int                  @id(map: "PK__TipoServ__3213E83F9ED49EA5") @default(autoincrement())
+  nome               String               @db.VarChar(50)
+  descricao          String               @db.VarChar(500)
+  id_area_empresa    Int?
+  qtd_dias           Int?
+  AreaTipoServico    AreaTipoServico[]
+  Demanda            Demanda[]
+  AreaEmpresa        Admin_AreaEmpresa?   @relation(fields: [id_area_empresa], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__TipoServi__id_ar__345EC57D")
+  TipoServicoEmpresa TipoServicoEmpresa[]
+
+  @@schema("dbo")
+}
+
+model TipoServicoEmpresa {
+  idTipoServico Int
+  idEmpresa     Int
+  Empresa       Empresa     @relation(fields: [idEmpresa], references: [id], onUpdate: NoAction, map: "FK__TipoServi__idEmp__09746778")
+  TipoServico   TipoServico @relation(fields: [idTipoServico], references: [id], onUpdate: NoAction, map: "FK__TipoServi__idTip__0880433F")
+
+  @@id([idTipoServico, idEmpresa], map: "PK__TipoServ__5D84C19CE0A36652")
+  @@schema("Admin")
+}
+
+model Usuario {
+  id                                               Int                @id(map: "PK__Usuario__3213E83F69AD1F52") @default(autoincrement())
+  email                                            String             @unique(map: "UQ__Usuario__AB6E6164E918976C") @db.VarChar(150)
+  nome                                             String             @db.VarChar(250)
+  telefone                                         String?            @db.VarChar(20)
+  cpf                                              String?            @db.VarChar(15)
+  senha                                            String             @db.VarChar(Max)
+  altera_senha                                     Int                @default(1, map: "DF_Usuario_altera_senha") @db.TinyInt
+  perfil_id                                        Int?
+  empresa_id                                       Int?
+  ativo                                            Int?               @default(1, map: "DF__Usuario__ativo__2739D489") @db.TinyInt
+  tentativas                                       Int?               @default(0, map: "DF__Usuario__tentati__3A179ED3")
+  vcto_senha                                       DateTime?          @db.Date
+  acesso_amil                                      Int?               @default(0, map: "DF__Usuario__acesso___65F62111") @db.TinyInt
+  adm                                              Int?               @default(0, map: "DF__Usuario__adm__7908F585") @db.TinyInt
+  Anexo                                            Anexo[]
+  AreaUsuario                                      AreaUsuario[]
+  Demanda_Demanda_usuario_criador_idToUsuario      Demanda[]          @relation("Demanda_usuario_criador_idToUsuario")
+  Demanda_Demanda_usuario_distribuicao_idToUsuario Demanda[]          @relation("Demanda_usuario_distribuicao_idToUsuario")
+  Honorario                                        Honorario[]
+  LogDemanda                                       LogDemanda[]
+  LogPacote                                        LogPacote[]
+  Pacote                                           Pacote[]
+  Empresa                                          Empresa?           @relation(fields: [empresa_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Usuario__empresa__34C8D9D1")
+  Perfil                                           Perfil?            @relation(fields: [perfil_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Usuario__perfil___35BCFE0A")
+  UsuarioPermissao                                 UsuarioPermissao[]
+
+  @@schema("dbo")
+}
+
+model UsuarioPermissao {
+  id           Int       @id(map: "PK__UsuarioP__3213E83F547FD928") @default(autoincrement())
+  usuario_id   Int
+  permissao_id Int
+  Permissao    Permissao @relation(fields: [permissao_id], references: [id], onUpdate: NoAction, map: "FK__UsuarioPe__permi__38996AB5")
+  Usuario      Usuario   @relation(fields: [usuario_id], references: [id], onUpdate: NoAction, map: "FK__UsuarioPe__usuar__398D8EEE")
+
+  @@schema("dbo")
+}
+
+model Agenda {
+  id         Int     @id(map: "PK_Agenda") @default(autoincrement())
+  observacao String? @db.Text
+  id_demanda Int?
+  data       String? @db.VarChar(20)
+  analista   String? @db.VarChar(100)
+
+  @@schema("AdminAPI")
+}
+
+model Beneficiario {
+  id         Int     @id(map: "PK_Beneficiario") @default(autoincrement())
+  nome       String? @db.VarChar(255)
+  id_demanda Int?
+  @@schema("AdminAPI")
+}
+
+model Checklist {
+  id            Int     @id(map: "PK_Checklist") @default(autoincrement())
+  id_demanda    Int?
+  item          String? @db.VarChar(100)
+  observacao    String? @db.Text
+  justificativa String? @db.Text
+  resposta      String? @db.VarChar(3)
+
+  @@schema("AdminAPI")
+}
+
+model Complementacao {
+  id             Int     @id(map: "PK_Retrabalho") @default(autoincrement())
+  data           String? @db.VarChar(50)
+  motivo         String? @db.Text
+  id_demanda     Int?
+  complementacao Int?    @db.TinyInt
+
+  @@schema("AdminAPI")
+}
+
+model DatasBradesco {
+  id                 Int     @id(map: "PK_DatasBradesco") @default(autoincrement())
+  data_previa        String? @db.VarChar(20)
+  data_final_entrega String? @db.VarChar(20)
+  demanda_id         Int?
+  previa_enviada     Int?    @db.TinyInt
+
+  @@schema("AdminAPI")
+}
+
+model Finalizacao {
+  id            Int     @id(map: "PK_Finalizcao") @default(autoincrement())
+  data          String? @db.VarChar(50)
+  justificativa String? @db.Text
+  id_demanda    Int?
+
+  @@schema("AdminAPI")
+}
+
+model Irregularidade {
+  id         Int     @id(map: "PK_Irregularidade") @default(autoincrement())
+  nome       String? @db.VarChar(255)
+  id_demanda Int?
+
+  @@schema("AdminAPI")
+}
+
+model ItensChecklist {
+  id        Int     @id(map: "PK_ItensChecklist") @default(autoincrement())
+  item      String? @db.VarChar(100)
+  descricao String? @db.Text
+
+  @@schema("AdminAPI")
+}
+
+model Prestador {
+  id         Int     @id(map: "PK_Prestador") @default(autoincrement())
+  nome       String? @db.VarChar(255)
+  id_demanda Int?
+
+  @@schema("AdminAPI")
+}
+
+model Solicitante {
+  id                   Int     @id(map: "PK_Solicitante") @default(autoincrement())
+  analista_solicitante String? @db.VarChar(100)
+  demanda_id           Int?
+
+  @@schema("AdminAPI")
+}
+
+model TipoIrregularidade {
+  id   Int     @id(map: "PK_TipoIrregularidades") @default(autoincrement())
+  nome String? @db.VarChar(255)
+
+  @@schema("AdminAPI")
+}
+
+model Valor {
+  id         Int     @id(map: "PK_Valor") @default(autoincrement())
+  valor      Float?
+  id_demanda Int?
+  periodo    String? @db.VarChar(50)
+
+  @@schema("AdminAPI")
+}
