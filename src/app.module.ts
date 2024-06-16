@@ -8,6 +8,8 @@ import { AnexoModule } from './modules/anexo.module';
 import { AgendaModule } from './modules/agenda.module';
 import { BeneficiarioModule } from './modules/beneficiario.module';
 import { ChecklistModule } from './modules/checklist.module';
+import { DemandaModule } from './modules/demanda.module';
+import { HelperModule } from './modules/helper.module';
 
 @Module({
   imports: [
@@ -16,7 +18,9 @@ import { ChecklistModule } from './modules/checklist.module';
     AnexoModule,
     AgendaModule,
     BeneficiarioModule,
-    ChecklistModule
+    ChecklistModule,
+    DemandaModule,
+    HelperModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
