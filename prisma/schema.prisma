@@ -129,6 +129,16 @@ model Demanda {
   LogDemanda                                       LogDemanda[]
   Pacote                                           Pacote[]
   RelatorioDemanda                                 RelatorioDemanda[]
+  Agenda                                           Agenda[]
+  Beneficiario                                     Beneficiario[]
+  Checklist                                        Checklist[]
+  Complementacao                                   Complementacao[]
+  DatasBradesco                                    DatasBradesco[]
+  Finalizacao                                      Finalizacao[]
+  Irregularidade                                   Irregularidade[]
+  Valor                                            Valor[]
+  Prestador                                        Prestador[]
+  Solicitante                                      Solicitante[]
 
   @@schema("dbo")
 }
@@ -492,9 +502,10 @@ model UsuarioPermissao {
 model Agenda {
   id         Int     @id(map: "PK_Agenda") @default(autoincrement())
   observacao String? @db.Text
-  id_demanda Int?
+  id_demanda Int?    @db.Int
   data       String? @db.VarChar(20)
   analista   String? @db.VarChar(100)
+  demanda    Demanda? @relation(fields: [id_demanda], references: [id]) // This creates a many-to-one relation with Demanda
 
   @@schema("AdminAPI")
 }
@@ -503,6 +514,8 @@ model Beneficiario {
   id         Int     @id(map: "PK_Beneficiario") @default(autoincrement())
   nome       String? @db.VarChar(255)
   id_demanda Int?
+  demanda    Demanda? @relation(fields: [id_demanda], references: [id]) // This creates a many-to-one relation with Demanda
+
   @@schema("AdminAPI")
 }
 
@@ -513,6 +526,7 @@ model Checklist {
   observacao    String? @db.Text
   justificativa String? @db.Text
   resposta      String? @db.VarChar(3)
+  demanda       Demanda? @relation(fields: [id_demanda], references: [id]) // This creates a many-to-one relation with Demanda
 
   @@schema("AdminAPI")
 }
@@ -523,6 +537,7 @@ model Complementacao {
   motivo         String? @db.Text
   id_demanda     Int?
   complementacao Int?    @db.TinyInt
+  demanda        Demanda? @relation(fields: [id_demanda], references: [id]) // This creates a many-to-one relation with Demanda
 
   @@schema("AdminAPI")
 }
@@ -533,6 +548,7 @@ model DatasBradesco {
   data_final_entrega String? @db.VarChar(20)
   demanda_id         Int?
   previa_enviada     Int?    @db.TinyInt
+  demanda            Demanda? @relation(fields: [demanda_id], references: [id]) // This creates a many-to-one relation with Demanda
 
   @@schema("AdminAPI")
 }
@@ -542,6 +558,7 @@ model Finalizacao {
   data          String? @db.VarChar(50)
   justificativa String? @db.Text
   id_demanda    Int?
+  demanda       Demanda? @relation(fields: [id_demanda], references: [id]) // This creates a many-to-one relation with Demanda
 
   @@schema("AdminAPI")
 }
@@ -550,6 +567,7 @@ model Irregularidade {
   id         Int     @id(map: "PK_Irregularidade") @default(autoincrement())
   nome       String? @db.VarChar(255)
   id_demanda Int?
+  demanda    Demanda? @relation(fields: [id_demanda], references: [id]) // This creates a many-to-one relation with Demanda
 
   @@schema("AdminAPI")
 }
@@ -565,8 +583,8 @@ model ItensChecklist {
 model Prestador {
   id         Int     @id(map: "PK_Prestador") @default(autoincrement())
   nome       String? @db.VarChar(255)
-  id_demanda Int?
-
+  id_demanda Int? 
+  demanda    Demanda? @relation(fields: [id_demanda], references: [id]) // This creates a many-to-one relation with Demanda
   @@schema("AdminAPI")
 }
 
@@ -574,7 +592,7 @@ model Solicitante {
   id                   Int     @id(map: "PK_Solicitante") @default(autoincrement())
   analista_solicitante String? @db.VarChar(100)
   demanda_id           Int?
-
+  demanda              Demanda? @relation(fields: [demanda_id], references: [id]) // This creates a many-to-one relation with Demanda
   @@schema("AdminAPI")
 }
 
@@ -590,6 +608,7 @@ model Valor {
   valor      Float?
   id_demanda Int?
   periodo    String? @db.VarChar(50)
+  demanda    Demanda? @relation(fields: [id_demanda], references: [id]) // This creates a many-to-one relation with Demanda
 
   @@schema("AdminAPI")
 }

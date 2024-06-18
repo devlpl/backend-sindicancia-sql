@@ -56,8 +56,8 @@ export class DemandaRepository {
             }
         });
         if (data) query.push({
-            data_criacao: {
-                gte: new Date(data)
+            data_demanda: {
+                gte: new Date(data),
             }
         });
         const demandas = await this.prisma.demanda.findMany({
@@ -72,10 +72,59 @@ export class DemandaRepository {
                 Status: true,
                 Usuario_Demanda_usuario_criador_idToUsuario: true,
                 Usuario_Demanda_usuario_distribuicao_idToUsuario: true,
-                Empresa: true
+                Empresa: true,
+                Finalizacao: true,
+                Pacote: {   
+                    include: {
+                        Usuario: true
+                    }
+                },
+                Complementacao: true,
+                DatasBradesco: true,
+                Solicitante: true
+            },
+            orderBy: {
+                id: 'desc'
             }
         });
         return demandas.map(demanda => this.helperService.transformBigIntToString(demanda));
+    }
+
+    async countDemandasByFilter(filters: FilterDemandasDto): Promise<number> {
+        const { analista, areaEmpresa, codigo, data, servico, status } = filters;
+        const query = []
+        if (analista) query.push({
+            OR: [
+                { usuario_criador_id: parseInt(analista) },
+                { usuario_distribuicao_id: parseInt(analista) }
+            ]
+        });
+        if (areaEmpresa) query.push({
+            AreaEmpresa: {
+                id: parseInt(areaEmpresa)
+            }
+        });
+        if (codigo) query.push({ codigo });
+        if (servico) query.push({
+            TipoServico: {
+                id: parseInt(servico)
+            }
+        });
+        if (status) query.push({
+            Status: {
+                id: parseInt(status)
+            }
+        });
+        if (data) query.push({
+            data_demanda: {
+                gte: new Date(data),
+            }
+        });
+        return this.prisma.demanda.count({
+            where: {
+                AND: query
+            }
+        });
     }
 
     async update(id: number, demanda: Demanda): Promise<Demanda> {

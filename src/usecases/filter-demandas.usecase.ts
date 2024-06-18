@@ -7,7 +7,11 @@ import { FilterDemandasDto } from "src/dto/filter-demandas.dto";
 export class FilterDemandasUsecase {
     constructor(private demandaRepository: DemandaRepository) { }
 
-    async execute(filters: FilterDemandasDto): Promise<Demanda[]> {
-        return this.demandaRepository.findDemandasByFilter(filters);
+    async execute(filters: FilterDemandasDto): Promise<any> {
+        const [demandas, total] = await Promise.all([
+            this.demandaRepository.findDemandasByFilter(filters),
+            this.demandaRepository.countDemandasByFilter(filters)
+        ]);
+        return { demandas, total };
     }
 }
